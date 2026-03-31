@@ -23,16 +23,16 @@ If you want to test the containerized version:
 ├─CS450-SPRING2026-CryptoBot/
 ├── .devcontainer/           # VS Code container           
 ├── data/                    # Data Storage (All .csv ignored by Git)           
-│   ├── logs/                
-│   ├── processed/           
-│   └── raw/                 
+ │   ├── logs/                
+ │   ├── processed/           
+ │   └── raw/                 
 ├── docs/                  
 ├── outputs/                 
 ├── src/                     
-│   ├── bot/                 
-│   ├── dashboard/           
-│   ├── data/                
-│   └── model/               
+ │   ├── bot/                 
+ │   ├── dashboard/           
+ │   ├── data/                
+ │   └── model/               
 ├── .dockerignore            # Standardizes what stays out of the image           
 ├── .env                     # Your private API Keys           
 ├── .gitignore               # Standardizes what stays out of git repo           
