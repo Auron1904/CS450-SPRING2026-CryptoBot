@@ -1,5 +1,7 @@
 # API keys and config
 config.py
+.env                 # CRITICAL for your Docker/uv setup
+.env.local
 
 # Trained model files (too large for GitHub)
 src/model/saved/*.h5
@@ -16,10 +18,16 @@ outputs/*.png
 __pycache__/
 *.pyc
 *.pyo
+*.pyd
+.pytest_cache/
 
-# VS Code settings
+# System Files 
+.DS_Store
+Thumbs.db
 .vscode/
+.idea/
+.target/
 
 # Virtual environment (if you use one)
-venv/
-env/
+.venv/
+.env/

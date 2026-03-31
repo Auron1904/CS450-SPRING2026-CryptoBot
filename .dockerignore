@@ -1,0 +1,48 @@
+# Ignore the local virtual environment (Docker builds its own)
+.venv/
+__pycache__/
+.git/
+
+# Ignore version control
+.git/
+.gitignore
+
+# Ignore local metadata
+.python-version
+pyproject.toml.bak
+
+# Ignore large data files (Usually you mount these or download them inside)
+data/raw/
+data/processed/
+
+# Ignore documentation and tests to keep the image slim
+docs/
+tests/
+
+
+# Ignore system junk
+__pycache__/
+.DS_Store
+
+# AI & Model Junk
+*.json
+*.h5
+*.model
+*.bin
+outputs/
+
+# Streamlit and Web Junk
+.streamlit/
+static/
+
+# IDE and Editor Junk
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Secrets
+.env
+.env.local
+.env.*.local
+config.py
