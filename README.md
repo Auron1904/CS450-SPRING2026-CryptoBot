@@ -21,8 +21,8 @@ If you want to test the containerized version:
 ## Project Structure
 
 ├─CS450-SPRING2026-CryptoBot/
-├── .devcontainer/           # VS Code container
-├── data/                    # Data Storage (All .csv ignored by Git)
+├── .devcontainer/           # VS Code container           
+├── data/                    # Data Storage (All .csv ignored by Git)           
 │   ├── logs/                
 │   ├── processed/           
 │   └── raw/                 
@@ -33,13 +33,13 @@ If you want to test the containerized version:
 │   ├── dashboard/           
 │   ├── data/                
 │   └── model/               
-├── .dockerignore            # Standardizes what stays out of the image
-├── .env                     # Your private API Keys
-├── .gitignore               # Standardizes what stays out of git repo
-├── .python-version          # Pins project to Python 3.12
-├── app.py                   # Main Entry Point (Streamlit)
-├── Dockerfile               # Linux build instructions
-├── docker-compose.yml       # One-command launch
-├── pyproject.toml           # Dependency list
-├── uv.lock                  # Version blueprint
-└── README.md                # Readme Setup
+├── .dockerignore            # Standardizes what stays out of the image           
+├── .env                     # Your private API Keys           
+├── .gitignore               # Standardizes what stays out of git repo           
+├── .python-version          # Pins project to Python 3.12           
+├── app.py                   # Main Entry Point (Streamlit)           
+├── Dockerfile               # Linux build instructions           
+├── docker-compose.yml       # One-command launch           
+├── pyproject.toml           # Dependency list           
+├── uv.lock                  # Version blueprint           
+└── README.md                # Readme Setup           
