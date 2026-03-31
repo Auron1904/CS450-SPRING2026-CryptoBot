@@ -8,9 +8,7 @@ This is a group project for CS-450 at SDSU. The project is an Artificial Intelli
    Run `uv sync` in the root folder. (This automatically installs Python 3.12 and all libraries).
 3. **Setup Secrets**:   
    Add your API keys to the new `.env` file.
-4. **Run Dashboard:**
-   Run `uv run streamlit run app.py`
-5. ** 🐳 Running with Docker**:
+4. ** 🐳 Running with Docker**:
 If you want to test the containerized version:
    Run `docker compose up --build`
    Access the dashboard at: `http://localhost:8501`
@@ -44,5 +42,4 @@ If you want to test the containerized version:
 ├── docker-compose.yml       # One-command launch
 ├── pyproject.toml           # Dependency list
 ├── uv.lock                  # Version blueprint
-├── README.md                # Team setup guide
-└── app.py                   # Main Entry Point (Streamlit)
+└── README.md                # Readme Setup
