@@ -1,6 +1,6 @@
 # API keys and config
 config.py
-.env                 # CRITICAL for your Docker/uv setup
+.env
 .env.local
 
 # Trained model files (too large for GitHub)
@@ -24,6 +24,7 @@ __pycache__/
 # System Files 
 .DS_Store
 Thumbs.db
+mac/
 .vscode/
 .idea/
 .target/

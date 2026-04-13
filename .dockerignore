@@ -2,6 +2,8 @@
 .venv/
 __pycache__/
 .git/
+.env/
+
 
 # Ignore version control
 .git/
@@ -18,7 +20,7 @@ data/processed/
 # Ignore documentation and tests to keep the image slim
 docs/
 tests/
-
+mac/
 
 # Ignore system junk
 __pycache__/

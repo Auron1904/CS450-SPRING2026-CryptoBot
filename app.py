@@ -1,57 +1,96 @@
 import streamlit as st
-import pandas as pd
-import plotly.graph_objects as go
+
+from src.bot.alpaca_client import AlpacaClient
+from src.bot.logic import MATrendStrategy
+from src.dashboard.account import render_account_metrics
+from src.dashboard.chart import render_price_chart
+from src.dashboard.controls import render_manual_controls
+from src.dashboard.history import render_trade_history
 from src.data.downloader import fetch_and_process_data
 
 st.set_page_config(page_title="Crypto Bot Dashboard", layout="wide")
 
 st.title("🚀 CS450 CryptoTradeBot Dashboard")
 
-# --- Sidebar Controls ---
+if "strategy" not in st.session_state:
+    st.session_state["strategy"] = MATrendStrategy()
+
+if "latest_signal" not in st.session_state:
+    st.session_state["latest_signal"] = None
+
+if "latest_order" not in st.session_state:
+    st.session_state["latest_order"] = None
+
+if "force_signal" not in st.session_state:
+    st.session_state["force_signal"] = "None"
+
+if "previous_account_snapshot" not in st.session_state:
+    st.session_state["previous_account_snapshot"] = None
+
+alpaca_client = None
+try:
+    alpaca_client = AlpacaClient()
+except ValueError:
+    pass
+
 st.sidebar.header("Data Settings")
 days_to_fetch = st.sidebar.slider("Days of History", 7, 365, 90)
 
 if st.sidebar.button("Fetch Fresh Data"):
     with st.spinner("Updating dataset..."):
-        df = fetch_and_process_data(days=days_to_fetch)
-        if df is not None:
-            df.to_csv("data/raw/bitcoin_dataset.csv", index=False)
+        dataset = fetch_and_process_data(days=days_to_fetch)
+        if dataset is not None:
+            dataset.to_csv("data/raw/bitcoin_dataset.csv", index=False)
             st.sidebar.success("CSV Updated!")
+        else:
+            st.sidebar.error("Failed to fetch data from CoinGecko.")
 
-# --- Main Dashboard ---
-try:
-    # Load the data that was saved by your fetch script
-    df = pd.read_csv("data/raw/bitcoin_dataset.csv")
-    df['timestamp'] = pd.to_datetime(df['timestamp'])
+st.sidebar.header("Trade Signal")
+if st.sidebar.button("Generate Trade Signal"):
+    with st.spinner("Generating MA_5 signal..."):
+        st.session_state["latest_signal"] = st.session_state[
+            "strategy"
+        ].generate_signal()
 
-    # Create an Interactive Chart
-    fig = go.Figure()
+latest_signal = st.session_state.get("latest_signal")
+if latest_signal:
+    signal_value = latest_signal.get("signal", "HOLD")
+    if signal_value == "BUY":
+        st.sidebar.success(f"Signal: {signal_value}")
+    elif signal_value == "SELL":
+        st.sidebar.error(f"Signal: {signal_value}")
+    else:
+        st.sidebar.warning(f"Signal: {signal_value}")
 
-    # Add Price Line
-    fig.add_trace(go.Scatter(
-        x=df['timestamp'], y=df['price'], 
-        name='BTC Price', line=dict(color='#1f77b4')
-    ))
+render_manual_controls(alpaca_client)
 
-    # Add Moving Average Line (from your fetch_data.py logic)
-    fig.add_trace(go.Scatter(
-        x=df['timestamp'], y=df['ma_5'], 
-        name='5-Day Moving Average', line=dict(color='#ff7f0e', dash='dot')
-    ))
+df = render_price_chart()
+render_account_metrics(alpaca_client)
 
-    fig.update_layout(
-        title="Bitcoin Price vs Moving Average",
-        xaxis_title="Date",
-        yaxis_title="Price (USD)",
-        template="plotly_dark",
-        hovermode="x unified"
+if latest_signal:
+    st.subheader("Latest Trade Signal")
+    col1, col2, col3 = st.columns(3)
+    current_price = latest_signal.get("current_price")
+    ma_5 = latest_signal.get("ma_5")
+    current_price_label = (
+        "N/A" if current_price is None else f"{float(current_price):,.2f}"
     )
+    ma_5_label = "N/A" if ma_5 is None else f"{float(ma_5):,.2f}"
+    col1.metric("Signal", latest_signal.get("signal", "HOLD"))
+    col2.metric("Current Price", current_price_label)
+    col3.metric("MA_5", ma_5_label)
 
-    st.plotly_chart(fig, use_container_width=True)
+latest_order = st.session_state.get("latest_order")
+if latest_order:
+    st.subheader("Latest Paper Order")
+    if "error" in latest_order:
+        st.error(latest_order["error"])
+    else:
+        order_col1, order_col2 = st.columns(2)
+        order_col1.metric("Order ID", latest_order.get("order_id", "N/A"))
+        order_col2.metric("Status", latest_order.get("status", "N/A"))
 
-    # Show Raw Data Table
-    if st.checkbox("Show Raw Data Table"):
-        st.dataframe(df)
+render_trade_history(alpaca_client)
 
-except FileNotFoundError:
-    st.warning("No data found. Please click 'Fetch Fresh Data' in the sidebar to start.")
+if df is not None and st.checkbox("Show Raw Data Table"):
+    st.dataframe(df)
