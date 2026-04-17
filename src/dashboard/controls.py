@@ -71,7 +71,5 @@ def render_manual_controls(client) -> None:
                     f"Order sent: {signal_value} ({order_result['status']})"
                 )
                 st.toast(f"Forced/manual order sent: {signal_value}")
-
-            
     except Exception as exc:
         st.sidebar.error(f"Controls component failed: {exc}")
