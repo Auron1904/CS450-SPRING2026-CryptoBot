@@ -1,0 +1,34 @@
+# API keys and config
+config.py
+.env
+.env.local
+
+# Trained model files (too large for GitHub)
+src/model/saved/*.h5
+
+# Data files (too large for GitHub)
+data/raw/*.csv
+data/processed/*.csv
+data/logs/*.csv
+
+# Output charts
+outputs/*.png
+
+# Python cache (auto-generated junk files)
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+
+# System Files 
+.DS_Store
+Thumbs.db
+mac/
+.vscode/
+.idea/
+.target/
+
+# Virtual environment (if you use one)
+.venv/
+.env/

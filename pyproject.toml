@@ -1,0 +1,25 @@
+[project]
+name = "cs450-spring2026-cryptobot"
+version = "0.1.0"
+requires-python = ">=3.12"
+dependencies = [
+    "xgboost",
+    "scikit-learn",
+    "pandas-ta",
+    "ccxt",
+    "yfinance",
+    "streamlit",
+    "plotly",
+    "python-dotenv",
+    "alpaca-py>=0.43.2",
+    "streamlit-autorefresh>=1.0.1",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+[dependency-groups]
+dev = [
+    "pytest>=9.0.2",
+    "ruff>=0.15.8",
+]
+dev-dependencies = []
