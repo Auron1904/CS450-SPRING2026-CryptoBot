@@ -4,8 +4,10 @@ version = "0.1.0"
 requires-python = ">=3.12"
 dependencies = [
     "xgboost",
+    "scikit-learn",
     "pandas-ta",
     "ccxt",
+    "yfinance",
     "streamlit",
     "plotly",
     "python-dotenv",

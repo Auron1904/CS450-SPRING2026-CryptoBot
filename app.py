@@ -5,6 +5,7 @@ from src.bot.logic import MATrendStrategy
 from src.dashboard.account import render_account_metrics
 from src.dashboard.chart import render_price_chart
 from src.dashboard.controls import render_manual_controls
+from src.dashboard.forecast import render_ai_forecast
 from src.dashboard.history import render_trade_history
 from src.data.downloader import fetch_and_process_data
 
@@ -65,6 +66,7 @@ if latest_signal:
 render_manual_controls(alpaca_client)
 
 df = render_price_chart()
+render_ai_forecast()
 render_account_metrics(alpaca_client)
 
 if latest_signal:
@@ -79,16 +81,6 @@ if latest_signal:
     col1.metric("Signal", latest_signal.get("signal", "HOLD"))
     col2.metric("Current Price", current_price_label)
     col3.metric("MA_5", ma_5_label)
-
-latest_order = st.session_state.get("latest_order")
-if latest_order:
-    st.subheader("Latest Paper Order")
-    if "error" in latest_order:
-        st.error(latest_order["error"])
-    else:
-        order_col1, order_col2 = st.columns(2)
-        order_col1.metric("Order ID", latest_order.get("order_id", "N/A"))
-        order_col2.metric("Status", latest_order.get("status", "N/A"))
 
 render_trade_history(alpaca_client)
 
