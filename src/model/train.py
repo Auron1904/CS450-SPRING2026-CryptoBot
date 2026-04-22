@@ -6,6 +6,11 @@ import pandas as pd
 
 
 FEATURE_COLUMNS = [
+    "open",
+    "high",
+    "low",
+    "close",
+    "volume",
     "RSI_14",
     "MACD",
     "MACD_signal",
@@ -14,6 +19,21 @@ FEATURE_COLUMNS = [
     "SMA_50",
     "EMA_9",
     "ATR_14",
+    "ret_1",
+    "ret_3",
+    "ret_7",
+    "close_to_sma20",
+    "close_to_sma50",
+    "sma20_minus_sma50",
+    "ema9_minus_sma20",
+    "macd_cross_gap",
+    "atr_pct",
+    "ret_1_std_7",
+    "ret_1_std_14",
+    "high_low_range_pct",
+    "vol_ret_1",
+    "vol_ratio_20",
+    "range_pos_20",
 ]
 TARGET_COLUMN = "Target"
 
