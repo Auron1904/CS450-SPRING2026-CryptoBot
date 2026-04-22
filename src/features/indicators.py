@@ -15,6 +15,8 @@ FEATURE_DATA_COLUMNS = [
     "volume",
     "symbol",
     "timeframe",
+
+    # original indicators
     "RSI_14",
     "MACD",
     "MACD_signal",
@@ -23,6 +25,25 @@ FEATURE_DATA_COLUMNS = [
     "SMA_50",
     "EMA_9",
     "ATR_14",
+
+    # new features
+    "ret_1",
+    "ret_3",
+    "ret_7",
+    "close_to_sma20",
+    "close_to_sma50",
+    "sma20_minus_sma50",
+    "ema9_minus_sma20",
+    "macd_cross_gap",
+    "atr_pct",
+    "ret_1_std_7",
+    "ret_1_std_14",
+    "high_low_range_pct",
+    "vol_ret_1",
+    "vol_ratio_20",
+    "range_pos_20",
+
+    # target
     "Target",
 ]
 
@@ -64,64 +85,25 @@ def _get_pandas_ta():
         numba.njit = original_njit
 
 
-def add_technical_indicators(df: pd.DataFrame) -> pd.DataFrame:
+
+
+def add_target_labels(
+    df: pd.DataFrame,
+    horizon: int = 5,
+    threshold: float = 0.01,
+) -> pd.DataFrame:
     """
-    Add standard technical indicators to an OHLCV dataframe.
+    Add a binary target column based on future return over a multi-day horizon.
 
-    Expected input columns:
-    `timestamp`, `open`, `high`, `low`, `close`, `volume`
-    """
-    enriched_df = df.copy()
-    ta = _get_pandas_ta()
+    Target = 1 if the future return over `horizon` days is greater than
+    `threshold`, else 0.
 
-    required_columns = {"open", "high", "low", "close", "volume"}
-    missing_columns = sorted(required_columns.difference(enriched_df.columns))
-    if missing_columns:
-        missing = ", ".join(missing_columns)
-        raise ValueError(f"Missing required OHLCV columns: {missing}")
+    Small or negative moves are labeled 0 here, which keeps this as a binary
+    classification problem.
 
-    # Convert market columns to numeric so indicator calculations are reliable
-    # even if the CSV was loaded with mixed types.
-    for column in ["open", "high", "low", "close", "volume"]:
-        enriched_df[column] = pd.to_numeric(enriched_df[column], errors="coerce")
-
-    # Momentum: RSI helps measure whether price has recently moved too far
-    # in one direction.
-    enriched_df["RSI_14"] = ta.rsi(enriched_df["close"], length=14)
-
-    # Trend: MACD is commonly used to compare short- and long-term momentum.
-    macd_df = ta.macd(enriched_df["close"], fast=12, slow=26, signal=9)
-    if macd_df is None or macd_df.empty:
-        enriched_df["MACD"] = pd.NA
-        enriched_df["MACD_signal"] = pd.NA
-        enriched_df["MACD_hist"] = pd.NA
-    else:
-        enriched_df["MACD"] = macd_df.iloc[:, 0]
-        enriched_df["MACD_signal"] = macd_df.iloc[:, 1]
-        enriched_df["MACD_hist"] = macd_df.iloc[:, 2]
-
-    # Trend-following moving averages at short and medium windows.
-    enriched_df["SMA_20"] = ta.sma(enriched_df["close"], length=20)
-    enriched_df["SMA_50"] = ta.sma(enriched_df["close"], length=50)
-    enriched_df["EMA_9"] = ta.ema(enriched_df["close"], length=9)
-
-    # Volatility: ATR estimates average movement range using OHLC data.
-    enriched_df["ATR_14"] = ta.atr(
-        high=enriched_df["high"],
-        low=enriched_df["low"],
-        close=enriched_df["close"],
-        length=14,
-    )
-
-    return enriched_df
-
-
-def add_target_labels(df: pd.DataFrame) -> pd.DataFrame:
-    """
-    Add a binary target column for next-period direction.
-
-    Target = 1 if the next closing price is higher than the current closing
-    price, otherwise 0. The final row has no future label and is left empty.
+    Example:
+      horizon=3, threshold=0.005 means:
+      label as 1 only if price is up more than 0.5% after 3 days.
     """
     labeled_df = df.copy()
 
@@ -129,14 +111,15 @@ def add_target_labels(df: pd.DataFrame) -> pd.DataFrame:
         raise ValueError("Missing required OHLCV column: close")
 
     labeled_df["close"] = pd.to_numeric(labeled_df["close"], errors="coerce")
-    next_close = labeled_df["close"].shift(-1)
 
-    # Use a nullable integer dtype so the final unlabeled row can stay empty
-    # until the caller decides whether to drop it.
+    future_close = labeled_df["close"].shift(-horizon)
+    future_return = (future_close - labeled_df["close"]) / labeled_df["close"]
+
     labeled_df["Target"] = pd.Series(pd.NA, index=labeled_df.index, dtype="Int64")
-    valid_rows = labeled_df["close"].notna() & next_close.notna()
+
+    valid_rows = labeled_df["close"].notna() & future_close.notna()
     labeled_df.loc[valid_rows, "Target"] = (
-        next_close[valid_rows] > labeled_df.loc[valid_rows, "close"]
+        future_return[valid_rows] > threshold
     ).astype(int)
 
     return labeled_df
@@ -170,13 +153,117 @@ def build_feature_dataset(df: pd.DataFrame) -> pd.DataFrame:
         "SMA_50",
         "EMA_9",
         "ATR_14",
+        # new features
+        "ret_1",
+        "ret_3",
+        "ret_7",
+        "close_to_sma20",
+        "close_to_sma50",
+        "sma20_minus_sma50",
+        "ema9_minus_sma20",
+        "macd_cross_gap",
+        "atr_pct",
+        "ret_1_std_7",
+        "ret_1_std_14",
+        "high_low_range_pct",
+        "vol_ret_1",
+        "vol_ratio_20",
+        "range_pos_20",
     ]
-    feature_df = feature_df.dropna(subset=feature_columns_without_target).reset_index(
-        drop=True
-    )
+    feature_df = feature_df.dropna(subset=feature_columns_without_target).reset_index(drop=True)
 
     return feature_df[FEATURE_DATA_COLUMNS].copy()
 
+def add_technical_indicators(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Add standard technical indicators plus richer engineered features
+    to an OHLCV dataframe.
+    """
+    enriched_df = df.copy()
+    ta = _get_pandas_ta()
+
+    required_columns = {"open", "high", "low", "close", "volume"}
+    missing_columns = sorted(required_columns.difference(enriched_df.columns))
+    if missing_columns:
+        missing = ", ".join(missing_columns)
+        raise ValueError(f"Missing required OHLCV columns: {missing}")
+
+    for column in ["open", "high", "low", "close", "volume"]:
+        enriched_df[column] = pd.to_numeric(enriched_df[column], errors="coerce")
+
+    # Existing indicators
+    enriched_df["RSI_14"] = ta.rsi(enriched_df["close"], length=14)
+
+    macd_df = ta.macd(enriched_df["close"], fast=12, slow=26, signal=9)
+    if macd_df is None or macd_df.empty:
+        enriched_df["MACD"] = pd.NA
+        enriched_df["MACD_signal"] = pd.NA
+        enriched_df["MACD_hist"] = pd.NA
+    else:
+        enriched_df["MACD"] = macd_df.iloc[:, 0]
+        enriched_df["MACD_signal"] = macd_df.iloc[:, 1]
+        enriched_df["MACD_hist"] = macd_df.iloc[:, 2]
+
+    enriched_df["SMA_20"] = ta.sma(enriched_df["close"], length=20)
+    enriched_df["SMA_50"] = ta.sma(enriched_df["close"], length=50)
+    enriched_df["EMA_9"] = ta.ema(enriched_df["close"], length=9)
+
+    enriched_df["ATR_14"] = ta.atr(
+        high=enriched_df["high"],
+        low=enriched_df["low"],
+        close=enriched_df["close"],
+        length=14,
+    )
+
+    # New return features
+    enriched_df["ret_1"] = enriched_df["close"].pct_change(1)
+    enriched_df["ret_3"] = enriched_df["close"].pct_change(3)
+    enriched_df["ret_7"] = enriched_df["close"].pct_change(7)
+
+    # Trend relationship features
+    enriched_df["close_to_sma20"] = (
+        (enriched_df["close"] - enriched_df["SMA_20"]) / enriched_df["SMA_20"]
+    )
+    enriched_df["close_to_sma50"] = (
+        (enriched_df["close"] - enriched_df["SMA_50"]) / enriched_df["SMA_50"]
+    )
+    enriched_df["sma20_minus_sma50"] = (
+        (enriched_df["SMA_20"] - enriched_df["SMA_50"]) / enriched_df["SMA_50"]
+    )
+    enriched_df["ema9_minus_sma20"] = (
+        (enriched_df["EMA_9"] - enriched_df["SMA_20"]) / enriched_df["SMA_20"]
+    )
+    enriched_df["macd_cross_gap"] = (
+        enriched_df["MACD"] - enriched_df["MACD_signal"]
+    )
+
+    # Volatility features
+    enriched_df["atr_pct"] = enriched_df["ATR_14"] / enriched_df["close"]
+    enriched_df["ret_1_std_7"] = enriched_df["ret_1"].rolling(7).std()
+    enriched_df["ret_1_std_14"] = enriched_df["ret_1"].rolling(14).std()
+    enriched_df["high_low_range_pct"] = (
+        (enriched_df["high"] - enriched_df["low"]) / enriched_df["close"]
+    )
+
+    # Volume features
+    enriched_df["vol_ret_1"] = enriched_df["volume"].pct_change(1)
+    enriched_df["vol_sma_20"] = enriched_df["volume"].rolling(20).mean()
+    enriched_df["vol_ratio_20"] = enriched_df["volume"] / enriched_df["vol_sma_20"]
+
+    # Rolling range / price position
+    enriched_df["rolling_high_20"] = enriched_df["high"].rolling(20).max()
+    enriched_df["rolling_low_20"] = enriched_df["low"].rolling(20).min()
+    range_denominator = (
+         enriched_df["rolling_high_20"] - enriched_df["rolling_low_20"]
+    )
+
+    enriched_df["range_pos_20"] = (
+        (enriched_df["close"] - enriched_df["rolling_low_20"]) /
+        range_denominator.replace(0, pd.NA)
+        )   
+        
+
+    return enriched_df
 
 if __name__ == "__main__":
     project_root = Path(__file__).resolve().parents[2]
@@ -219,3 +306,4 @@ if __name__ == "__main__":
     output_path.parent.mkdir(parents=True, exist_ok=True)
     feature_df.to_csv(output_path, index=False)
     print(f"\nSaved feature dataset to: {output_path}")
+    print(feature_df["Target"].value_counts(normalize=True))
