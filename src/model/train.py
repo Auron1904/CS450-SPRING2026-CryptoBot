@@ -55,7 +55,7 @@ def load_training_data(input_path: str | Path) -> tuple[pd.DataFrame, pd.Series]
     missing_columns = [column for column in required_columns if column not in df.columns]
     if missing_columns:
         missing = ", ".join(missing_columns)
-        raise ValueError(f"Training dataset is missing required columns: {missing}")
+        raise ValueError(f"Training dataset is missing reqskuired columns: {missing}")
 
     model_df = df[required_columns].copy()
     model_df = model_df.apply(pd.to_numeric, errors="coerce")

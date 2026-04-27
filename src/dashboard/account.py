@@ -39,7 +39,7 @@ def render_account_metrics(client) -> None:
                 previous_snapshot.get("buying_power", 0.0)
             )
 
-        col1, col2, col3 = st.columns(3)
+        col1, col2, col3, col4 = st.columns(4)
         col1.metric(
             "Total Equity",
             f"${snapshot['equity']:,.2f}",
@@ -50,7 +50,7 @@ def render_account_metrics(client) -> None:
             f"${snapshot['buying_power']:,.2f}",
             None if buying_power_delta is None else f"${buying_power_delta:,.2f}",
         )
-        col3.metric("Unrealized P/L", f"${snapshot['unrealized_pl']:,.2f}")
-        st.caption(f"Current Position: {snapshot['position_state']}")
+        col3.metric("Current Position", snapshot['position_state'])
+        col4.metric("Unrealized P/L", f"${snapshot['unrealized_pl']:,.2f}")
     except Exception as exc:
         st.error(f"Account component failed: {exc}")

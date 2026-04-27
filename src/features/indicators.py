@@ -89,8 +89,8 @@ def _get_pandas_ta():
 
 def add_target_labels(
     df: pd.DataFrame,
-    horizon: int = 5,
-    threshold: float = 0.01,
+    horizon: int = 7,
+    threshold: float = 0.0001,
 ) -> pd.DataFrame:
     """
     Add a binary target column based on future return over a multi-day horizon.

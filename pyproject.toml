@@ -5,6 +5,7 @@ requires-python = ">=3.12"
 dependencies = [
     "xgboost",
     "scikit-learn",
+    "matplotlib",
     "pandas-ta",
     "ccxt",
     "yfinance",

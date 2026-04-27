@@ -3,16 +3,42 @@ import streamlit as st
 from src.bot.alpaca_client import AlpacaClient
 from src.bot.logic import MATrendStrategy
 from src.dashboard.account import render_account_metrics
+from src.dashboard.auto_trade import render_auto_trade_controls
+from src.dashboard.backtest import render_backtest
 from src.dashboard.chart import render_price_chart
 from src.dashboard.controls import render_manual_controls
 from src.dashboard.forecast import render_ai_forecast
 from src.dashboard.history import render_trade_history
+from src.dashboard.pipeline import render_pipeline
 from src.data.downloader import fetch_and_process_data
 
 st.set_page_config(page_title="Crypto Bot Dashboard", layout="wide")
 
-st.title("🚀 CS450 CryptoTradeBot Dashboard")
+# ========== CUSTOM HEADER WITH TABS ==========
+col_title, col_space, col_tab1, col_tab2, col_tab3 = st.columns([1.5, 1.5, 1, 1, 1])
 
+with col_title:
+    st.title("🚀 CS450 CryptoTradeBot Dashboard")
+
+with col_tab1:
+    if st.button("📊 Dashboard", use_container_width=True):
+        st.session_state["current_tab"] = "Dashboard"
+
+with col_tab2:
+    if st.button("🔧 Pipeline", use_container_width=True):
+        st.session_state["current_tab"] = "Pipeline"
+
+with col_tab3:
+    if st.button("📈 Backtest", use_container_width=True):
+        st.session_state["current_tab"] = "Backtest"
+
+# Initialize current_tab in session state
+if "current_tab" not in st.session_state:
+    st.session_state["current_tab"] = "Dashboard"
+
+selected_tab = st.session_state["current_tab"]
+
+# Initialize session state
 if "strategy" not in st.session_state:
     st.session_state["strategy"] = MATrendStrategy()
 
@@ -28,12 +54,14 @@ if "force_signal" not in st.session_state:
 if "previous_account_snapshot" not in st.session_state:
     st.session_state["previous_account_snapshot"] = None
 
+# Initialize Alpaca client
 alpaca_client = None
 try:
     alpaca_client = AlpacaClient()
 except ValueError:
     pass
 
+# ========== SIDEBAR CONTROLS ==========
 st.sidebar.header("Data Settings")
 days_to_fetch = st.sidebar.slider("Days of History", 7, 365, 90)
 
@@ -65,24 +93,37 @@ if latest_signal:
 
 render_manual_controls(alpaca_client)
 
-df = render_price_chart()
-render_ai_forecast()
-render_account_metrics(alpaca_client)
+# Auto-trade controls
+render_auto_trade_controls(alpaca_client)
 
-if latest_signal:
-    st.subheader("Latest Trade Signal")
-    col1, col2, col3 = st.columns(3)
-    current_price = latest_signal.get("current_price")
-    ma_5 = latest_signal.get("ma_5")
-    current_price_label = (
-        "N/A" if current_price is None else f"{float(current_price):,.2f}"
-    )
-    ma_5_label = "N/A" if ma_5 is None else f"{float(ma_5):,.2f}"
-    col1.metric("Signal", latest_signal.get("signal", "HOLD"))
-    col2.metric("Current Price", current_price_label)
-    col3.metric("MA_5", ma_5_label)
+# ========== CONTENT BASED ON SELECTED TAB ==========
+st.divider()
 
-render_trade_history(alpaca_client)
+if selected_tab == "Dashboard":
+    df = render_price_chart()
+    render_ai_forecast()
+    render_account_metrics(alpaca_client)
 
-if df is not None and st.checkbox("Show Raw Data Table"):
-    st.dataframe(df)
+    if latest_signal:
+        st.subheader("Latest Trade Signal")
+        col1, col2, col3 = st.columns(3)
+        current_price = latest_signal.get("current_price")
+        ma_5 = latest_signal.get("ma_5")
+        current_price_label = (
+            "N/A" if current_price is None else f"{float(current_price):,.2f}"
+        )
+        ma_5_label = "N/A" if ma_5 is None else f"{float(ma_5):,.2f}"
+        col1.metric("Signal", latest_signal.get("signal", "HOLD"))
+        col2.metric("Current Price", current_price_label)
+        col3.metric("MA_5", ma_5_label)
+
+    render_trade_history(alpaca_client)
+
+    if df is not None and st.checkbox("Show Raw Data Table"):
+        st.dataframe(df)
+
+elif selected_tab == "Pipeline":
+    render_pipeline()
+
+elif selected_tab == "Backtest":
+    render_backtest()

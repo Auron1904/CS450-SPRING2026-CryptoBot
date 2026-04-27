@@ -118,6 +118,16 @@ def train_and_score_one_split(
 
     X_test = test_df[FEATURE_COLUMNS]
     y_test = test_df[TARGET_COLUMN]
+    test_timestamps = test_df["timestamp"]
+
+    # Drop rows with NaN in features or target for test set
+    valid_idx = X_test.notna().all(axis=1) & y_test.notna()
+    X_test = X_test[valid_idx]
+    y_test = y_test[valid_idx]
+    test_timestamps = test_timestamps[valid_idx]
+
+    if len(X_test) == 0 or len(y_test) == 0:
+        return None  # Skip this split if no valid test data
 
     model = XGBClassifier(
         n_estimators=200,
@@ -145,7 +155,7 @@ def train_and_score_one_split(
         ),
         "predictions": pd.DataFrame(
             {
-                "timestamp": test_df["timestamp"].values,
+                "timestamp": test_timestamps.values,
                 "y_true": y_test.values,
                 "y_pred": y_pred,
                 "prob_up": prob_up,
@@ -188,6 +198,10 @@ def rolling_year_evaluation(
             continue
 
         results = train_and_score_one_split(train_df, test_df)
+
+        # Skip if no valid test data
+        if results is None:
+            continue
 
         predictions = results["predictions"].copy()
         predictions["train_years"] = ",".join(str(y) for y in train_year_block)
