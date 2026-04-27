@@ -146,7 +146,7 @@ def render_pipeline() -> None:
                         feature_df, train_years=2
                     )
 
-                    # Save to outputs/ so backtest tab can load them
+                    # Save to outputs/so backtest tab can load them
                     outputs_path = project_root / "outputs"
                     outputs_path.mkdir(parents=True, exist_ok=True)
 

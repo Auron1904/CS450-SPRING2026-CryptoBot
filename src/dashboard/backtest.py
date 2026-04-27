@@ -33,7 +33,7 @@ def render_backtest() -> None:
     """
     st.header("Backtest & Evaluation")
 
-    # Initialize session state
+    # Initialize Session State
     if "backtest_summary" not in st.session_state:
         st.session_state["backtest_summary"] = None
     if "backtest_equity_curve" not in st.session_state:

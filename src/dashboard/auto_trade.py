@@ -34,7 +34,7 @@ def render_auto_trade_controls(alpaca_client: AlpacaClient | None) -> None:
     # ========== AUTO-TRADE SECTION ==========
     st.sidebar.header("🤖 Auto-Trade (24hr)")
 
-    # Toggle switch
+    # Toggle Switch
     auto_trade_mode = st.sidebar.toggle(
         "Enable Auto-Trade",
         value=st.session_state["auto_trade_mode"],
@@ -42,13 +42,13 @@ def render_auto_trade_controls(alpaca_client: AlpacaClient | None) -> None:
     )
     st.session_state["auto_trade_mode"] = auto_trade_mode
 
-    # Status indicator
+    # Status Indicator
     if auto_trade_mode:
         st.sidebar.success("🟢 Auto-Trade: ON (24hr mode)")
     else:
         st.sidebar.info("⚪ Auto-Trade: OFF")
 
-    # Confirmation checkbox
+    # Confirmation Checkbox
     confirm = st.sidebar.checkbox(
         "I confirm auto-trade",
         value=st.session_state["auto_trade_confirmed"],
@@ -56,7 +56,7 @@ def render_auto_trade_controls(alpaca_client: AlpacaClient | None) -> None:
     )
     st.session_state["auto_trade_confirmed"] = confirm
 
-    # Notional input
+    # Notional Input
     notional = st.sidebar.number_input(
         "Auto-Trade Notional (USD)",
         min_value=1.0,
